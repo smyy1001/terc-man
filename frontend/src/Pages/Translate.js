@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AppBar, Toolbar } from "@mui/material";
 import './Translate.css';
-import { message } from 'antd';
 import { useParams, useNavigate } from "react-router-dom";
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
@@ -16,6 +15,8 @@ import KeyboardHideIcon from '@mui/icons-material/KeyboardHide';
 import KeyboardComponent from "react-simple-keyboard";
 import "react-simple-keyboard/build/css/index.css";
 import Axios from '../Axios';
+import toast, { Toaster } from 'react-hot-toast';
+
 
 const CustomTextField = styled(TextField)({
     "& .MuiInput-underline:after": {
@@ -127,7 +128,7 @@ const Translate = () => {
 
     const checkLan1 = () => {
         if (selectedLan1 === "") {
-            message.error("Lütfen çevrilmek istenen dilinizi seçin.");
+            toast.error("Lütfen çevrilmek istenen dilinizi seçin.");
             return false;
         }
         return true;
@@ -135,7 +136,7 @@ const Translate = () => {
 
     const checkLan2 = () => {
         if (selectedLan2 === "") {
-            message.error("Lütfen çevrilecek dilinizi seçin.");
+            toast.error("Lütfen çevrilecek dilinizi seçin.");
             return false;
         }
         return true;
@@ -143,7 +144,7 @@ const Translate = () => {
 
     const checkInput = () => {
         if (inputText === "") {
-            message.error("Lütfen çevrilecek metni girin.");
+            toast.error("Lütfen çevrilecek metni girin.");
             return false;
         }
         return true;
@@ -155,9 +156,9 @@ const Translate = () => {
             try {
                 const result = await translateText(inputText, selectedLan1, selectedLan2);
                 setTranslation(result);
-                // message.success(result);
+                // toast.success(result);
             } catch (error) {
-                message.error("An error occurred while translating. Check the console for details.");
+                toast.error("An error occurred while translating. Check the console for details.");
             }
         }
     };
@@ -192,17 +193,17 @@ const Translate = () => {
 
     const handleCopy = () => {
         if (!translation) {
-            message.error("Kopyalanacak içerik bulunamadı!");
+            toast.error("Kopyalanacak içerik bulunamadı!");
             return;
         }
 
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(translation)
                 .then(() => {
-                    message.success("Kopyalandı!");
+                    toast.success("Kopyalandı!");
                 })
                 .catch(() => {
-                    message.error("Kopyalama başarısız!");
+                    toast.error("Kopyalama başarısız!");
                 });
         } else {
             try {
@@ -217,13 +218,13 @@ const Translate = () => {
                 document.body.removeChild(textarea);
 
                 if (success) {
-                    message.success("Kopyalandı!");
+                    toast.success("Kopyalandı!");
                 } else {
-                    message.error("Kopyalama başarısız!");
+                    toast.error("Kopyalama başarısız!");
                 }
             } catch (error) {
                 console.error("Fallback copy failed:", error);
-                message.error("Bu tarayıcıda kopyalama yapılamamaktadır!");
+                toast.error("Bu tarayıcıda kopyalama yapılamamaktadır!");
             }
         }
     };
@@ -249,205 +250,208 @@ const Translate = () => {
     };
 
     return (
-        <div className='main-outer'>
-            <div className='main-outer1'>
-                <AppBar position="fixed" className="app-bar">
-                    <Toolbar className="styled-toolbar">
-                        <div className="bar-logo">
-                            Tercüman
-                        </div>
-                        <div className="styled-right-toolbar">
-                            <Autocomplete
-                                id="model-select"
-                                sx={{ width: '30%' }}
-                                options={models}
-                                disableClearable
-                                getOptionLabel={(option) => option.label}
-                                value={models.find((c) => c.code.toLowerCase() === selectedModel)}
-                                onChange={(event, newValue) => { setSelectedModel(newValue.code); setSelectedLan1(""); setSelectedLan2(""); }
-                                }
-                                renderInput={(params) => (
-                                    <CustomTextField
-                                        {...params}
-                                        label="Tercüme Modeli"
+        <>
+            <div><Toaster /></div>
+            <div className='main-outer'>
+                <div className='main-outer1'>
+                    <AppBar position="fixed" className="app-bar">
+                        <Toolbar className="styled-toolbar">
+                            <div className="bar-logo">
+                                Tercüman
+                            </div>
+                            <div className="styled-right-toolbar">
+                                <Autocomplete
+                                    id="model-select"
+                                    sx={{ width: '30%' }}
+                                    options={models}
+                                    disableClearable
+                                    getOptionLabel={(option) => option.label}
+                                    value={models.find((c) => c.code.toLowerCase() === selectedModel)}
+                                    onChange={(event, newValue) => { setSelectedModel(newValue.code); setSelectedLan1(""); setSelectedLan2(""); }
+                                    }
+                                    renderInput={(params) => (
+                                        <CustomTextField
+                                            {...params}
+                                            label="Tercüme Modeli"
+                                        />
+                                    )}
+                                />
+                            </div>
+                        </Toolbar>
+                    </AppBar>
+                </div>
+
+                <div className='main-outer2-upper'>
+                    <div className="main-outer2">
+                        <div className='main-inner1'>
+                            <div className='main-inner1-1'>
+                                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '10px' }}>
+                                    <Autocomplete
+                                        id="lan1-select"
+                                        sx={{ width: '100%' }}
+                                        options={getCountries()}
+                                        disableClearable
+                                        getOptionLabel={(option) => option.label}
+                                        value={getCountries().find((c) => c.code.toLowerCase() === selectedLan1.toLowerCase()) || null}
+                                        onChange={(event, newValue) => { if (newValue) setSelectedLan1(newValue.code); }
+                                        }
+                                        renderInput={(params) => (
+                                            <CustomTextField
+                                                {...params}
+                                                label="Dilinden Çevir"
+                                            />
+                                        )}
                                     />
-                                )}
-                            />
-                        </div>
-                    </Toolbar>
-                </AppBar>
-            </div>
-
-            <div className='main-outer2-upper'>
-                <div className="main-outer2">
-                    <div className='main-inner1'>
-                        <div className='main-inner1-1'>
-                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '10px' }}>
-                                <Autocomplete
-                                    id="lan1-select"
-                                    sx={{ width: '100%' }}
-                                    options={getCountries()}
-                                    disableClearable
-                                    getOptionLabel={(option) => option.label}
-                                    value={getCountries().find((c) => c.code.toLowerCase() === selectedLan1.toLowerCase()) || null}
-                                    onChange={(event, newValue) => { if (newValue) setSelectedLan1(newValue.code); }
-                                    }
-                                    renderInput={(params) => (
-                                        <CustomTextField
-                                            {...params}
-                                            label="Dilinden Çevir"
-                                        />
-                                    )}
-                                />
-                            </ div>
-                        </div>
-                        <div className='main-inner1-2'>
-                            <div className='main-inner1-2-text-box' style={{ position: "relative" }}>
-                                <CustomTextField
-                                    id="outlined-multiline-static"
-                                    label="Metin girin"
-                                    multiline
-                                    fullWidth
-                                    rows={10}
-                                    defaultValue={inputText}
-                                    value={inputText}
-                                    onChange={(e) => setInputText(e.target.value)}
-                                />
-                                <IconButton
-                                    onClick={handleKeyboardClick}
-                                    className="copy-icon"
-                                    style={{
-                                        margin: "13px",
-                                    }}
-                                >
-                                    {
-                                        !keyboardVisible ?
-                                            <KeyboardIcon />
-                                            :
-                                            <KeyboardHideIcon />
-                                    }
-                                </IconButton>
-
-                                {/* Floating Keyboard */}
-                                {keyboardVisible && (
-                                    <div style={{ position: "absolute", width: '90%', margin: '20px 0px 0px 20px', zIndex: 3, color:'black' }}>
-                                        <KeyboardComponent
-                                            onChange={handleKeyboardInput}
-                                            onKeyPress={handleKeyPress}
-                                            layout={{
-                                                default: [
-                                                    "q w e r t y u ı o p ğ ü",
-                                                    "a s d f g h j k l ş i ä",
-                                                    "z x c v b n m ö ç ß {bksp}",
-                                                    "{space} {language}"
-                                                ],
-                                                arabic: [
-                                                    "ض ص ث ق ف غ ع ه خ ح ج د",
-                                                    "ش س ي ب ل ا ت ن م ك ط",
-                                                    "ئ ء ؤ ر ى ة و ز ظ {bksp}",
-                                                    "{space} {language}"
-                                                ],
-                                                japanese: [
-                                                    "あ い う え お か き く け",
-                                                    "こ さ し す せ そ た ち つ",
-                                                    "て と な に ぬ ね の {bksp}",
-                                                    "{space} {language}"
-                                                ],
-                                                korean: [
-                                                    "ㅂ ㅈ ㄷ ㄱ ㅅ ㅛ ㅕ ㅑ ㅐ ㅔ",
-                                                    "ㅁ ㄴ ㅇ ㄹ ㅎ ㅗ ㅓ ㅏ ㅣ",
-                                                    "ㅋ ㅌ ㅊ ㅍ ㅠ ㅜ ㅡ {bksp}",
-                                                    "{space} {language}"
-                                                ],
-                                                chinese: [
-                                                    "我 是 中 国 人 你 好",
-                                                    "天 气 很 好 今 天 快 乐",
-                                                    "学 习 汉 字 非 常 有 意 思 {bksp}",
-                                                    "{space} {language}"
-                                                ],
-                                                russian: [
-                                                    "й ц у к е н г ш щ з х ъ",
-                                                    "ф ы в а п р о л д ж э",
-                                                    "я ч с м и т ь б ю {bksp}",
-                                                    "{space} {language}"
-                                                ],
-                                            }}
-                                            display={{
-                                                "{bksp}": "⌫",
-                                                "{space}": " ",
-                                                "{language}": "🌐",
-                                            }}
-                                            theme={"hg-theme-default hg-layout-default"}
-                                            layoutName={layout}
-                                        />
-                                    </div>
-                                )}
+                                </ div>
                             </div>
-                        </div>
-                    </div>
+                            <div className='main-inner1-2'>
+                                <div className='main-inner1-2-text-box' style={{ position: "relative" }}>
+                                    <CustomTextField
+                                        id="outlined-multiline-static"
+                                        label="Metin girin"
+                                        multiline
+                                        fullWidth
+                                        rows={10}
+                                        defaultValue={inputText}
+                                        value={inputText}
+                                        onChange={(e) => setInputText(e.target.value)}
+                                    />
+                                    <IconButton
+                                        onClick={handleKeyboardClick}
+                                        className="copy-icon"
+                                        style={{
+                                            margin: "13px",
+                                        }}
+                                    >
+                                        {
+                                            !keyboardVisible ?
+                                                <KeyboardIcon />
+                                                :
+                                                <KeyboardHideIcon />
+                                        }
+                                    </IconButton>
 
-                    <Tooltip title="Dilleri Değiştir">
-                        <IconButton style={{ margin: '0px 20px' }} onClick={handleSwitchLan} >
-                            <RepeatIcon style={{ width: '2.5rem', height: '2.5rem', color: 'white' }} />
-                        </IconButton>
-                    </Tooltip>
-
-                    <div className='main-inner2'>
-                        <div className='main-inner2-1'>
-                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '10px' }}>
-                                <Autocomplete
-                                    id="lan2-select"
-                                    sx={{ width: '100%' }}
-                                    disableClearable
-                                    options={getCountriesSource()}
-                                    getOptionLabel={(option) => option.label}
-                                    value={getCountriesSource().find((c) => c.code.toLowerCase() === selectedLan2.toLowerCase()) || null}
-                                    onChange={(event, newValue) => {
-                                        if (newValue) setSelectedLan2(newValue.code);
-                                    }}
-                                    renderInput={(params) => (
-                                        <CustomTextField
-                                            {...params}
-                                            label="Diline Çevir"
-                                        />
+                                    {/* Floating Keyboard */}
+                                    {keyboardVisible && (
+                                        <div style={{ position: "absolute", width: '90%', margin: '20px 0px 0px 20px', zIndex: 3, color: 'black' }}>
+                                            <KeyboardComponent
+                                                onChange={handleKeyboardInput}
+                                                onKeyPress={handleKeyPress}
+                                                layout={{
+                                                    default: [
+                                                        "q w e r t y u ı o p ğ ü",
+                                                        "a s d f g h j k l ş i ä",
+                                                        "z x c v b n m ö ç ß {bksp}",
+                                                        "{space} {language}"
+                                                    ],
+                                                    arabic: [
+                                                        "ض ص ث ق ف غ ع ه خ ح ج د",
+                                                        "ش س ي ب ل ا ت ن م ك ط",
+                                                        "ئ ء ؤ ر ى ة و ز ظ {bksp}",
+                                                        "{space} {language}"
+                                                    ],
+                                                    japanese: [
+                                                        "あ い う え お か き く け",
+                                                        "こ さ し す せ そ た ち つ",
+                                                        "て と な に ぬ ね の {bksp}",
+                                                        "{space} {language}"
+                                                    ],
+                                                    korean: [
+                                                        "ㅂ ㅈ ㄷ ㄱ ㅅ ㅛ ㅕ ㅑ ㅐ ㅔ",
+                                                        "ㅁ ㄴ ㅇ ㄹ ㅎ ㅗ ㅓ ㅏ ㅣ",
+                                                        "ㅋ ㅌ ㅊ ㅍ ㅠ ㅜ ㅡ {bksp}",
+                                                        "{space} {language}"
+                                                    ],
+                                                    chinese: [
+                                                        "我 是 中 国 人 你 好",
+                                                        "天 气 很 好 今 天 快 乐",
+                                                        "学 习 汉 字 非 常 有 意 思 {bksp}",
+                                                        "{space} {language}"
+                                                    ],
+                                                    russian: [
+                                                        "й ц у к е н г ш щ з х ъ",
+                                                        "ф ы в а п р о л д ж э",
+                                                        "я ч с м и т ь б ю {bksp}",
+                                                        "{space} {language}"
+                                                    ],
+                                                }}
+                                                display={{
+                                                    "{bksp}": "⌫",
+                                                    "{space}": " ",
+                                                    "{language}": "🌐",
+                                                }}
+                                                theme={"hg-theme-default hg-layout-default"}
+                                                layoutName={layout}
+                                            />
+                                        </div>
                                     )}
-                                />
-
+                                </div>
                             </div>
                         </div>
 
-                        <div className='main-inner2-2'>
-                            <div className='main-inner2-2-text-box'>
-                                <CustomTextField
-                                    id="outlined-multiline-static"
-                                    multiline
-                                    disabled
-                                    fullWidth
-                                    rows={10}
-                                    value={translation}
-                                    InputProps={{
-                                        endAdornment: (
-                                            <Tooltip title="Kopyala">
-                                                <IconButton onClick={handleCopy} className="copy-icon">
-                                                    <FileCopyIcon />
-                                                </IconButton>
-                                            </Tooltip>
-                                        ),
-                                    }}
-                                />
+                        <Tooltip title="Dilleri Değiştir">
+                            <IconButton style={{ margin: '0px 20px' }} onClick={handleSwitchLan} >
+                                <RepeatIcon style={{ width: '2.5rem', height: '2.5rem', color: 'white' }} />
+                            </IconButton>
+                        </Tooltip>
+
+                        <div className='main-inner2'>
+                            <div className='main-inner2-1'>
+                                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '10px' }}>
+                                    <Autocomplete
+                                        id="lan2-select"
+                                        sx={{ width: '100%' }}
+                                        disableClearable
+                                        options={getCountriesSource()}
+                                        getOptionLabel={(option) => option.label}
+                                        value={getCountriesSource().find((c) => c.code.toLowerCase() === selectedLan2.toLowerCase()) || null}
+                                        onChange={(event, newValue) => {
+                                            if (newValue) setSelectedLan2(newValue.code);
+                                        }}
+                                        renderInput={(params) => (
+                                            <CustomTextField
+                                                {...params}
+                                                label="Diline Çevir"
+                                            />
+                                        )}
+                                    />
+
+                                </div>
+                            </div>
+
+                            <div className='main-inner2-2'>
+                                <div className='main-inner2-2-text-box'>
+                                    <CustomTextField
+                                        id="outlined-multiline-static"
+                                        multiline
+                                        disabled
+                                        fullWidth
+                                        rows={10}
+                                        value={translation}
+                                        InputProps={{
+                                            endAdornment: (
+                                                <Tooltip title="Kopyala">
+                                                    <IconButton onClick={handleCopy} className="copy-icon">
+                                                        <FileCopyIcon />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            ),
+                                        }}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <Button className='button-class' variant="text" onClick={handleTranslate}>Çevir</Button>
+                <Button className='button-class' variant="text" onClick={handleTranslate}>Çevir</Button>
 
-            <footer className='footer'>
-                <div>
-                    &copy; {new Date().getFullYear()} SSTEK
-                </div>
-            </footer>
-        </div>
+                <footer className='footer'>
+                    <div>
+                        &copy; {new Date().getFullYear()} SSTEK
+                    </div>
+                </footer>
+            </div>
+        </>
     );
 };
 
