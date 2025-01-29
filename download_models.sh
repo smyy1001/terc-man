@@ -1,5 +1,10 @@
 #!/bin/bash
 
+echo "Installing necessary dependencies..."
+
+pip install sentencepiece
+pip install torch
+
 cd model_scripts || exit
 
 echo "Running download_helsinki_nlp_mul_eng.py..."
