@@ -52,11 +52,7 @@ http://localhost:3000
 ├── backend/
 ├── frontend/
 ├── models/                                             # NLP modelleri burada saklanacak
-├── model_scripts/                                      # Model scriptleri
-│   ├── download_helsinki_nlp_mul_eng.py        
-│   ├── download_m2m100.py 
-|   ├── download_mbart50.py 
-|   └── download_nllb.py
+├── model_scripts/                                      # Model indirme scriptleri
 ├── docker-compose.yml
 ├── README.md
 ├── .env
