@@ -43,7 +43,7 @@ Bu adımda:
 
 Çalışan servise aşağıdaki gibi görüntüleyebilirsiniz:
 ```bash
-http://localhost:3000
+http://<ip>:3000
 ```
 
 

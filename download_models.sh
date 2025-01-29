@@ -4,6 +4,7 @@ echo "Installing necessary dependencies..."
 
 pip install sentencepiece
 pip install torch
+pip install transformers
 
 cd model_scripts || exit
 
