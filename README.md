@@ -46,6 +46,13 @@ Bu adımda:
 http://<ip>:3000
 ```
 
+### 6️⃣ Sağlık Kontorlü
+
+Tüm modellerin çalışır halde olup olmadığını aşağıdaki gibi görüntüleyebilirsiniz:
+```bash
+http://<ip>:8080/health
+```
+
 
 ## 📂 Proje Yapısı
 ```
