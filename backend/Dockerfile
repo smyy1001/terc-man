@@ -6,7 +6,12 @@ RUN apt-get update && apt-get install -y \
     libgcc1 && \
     rm -rf /var/lib/apt/lists/*
 
-RUN pip install flask transformers torch sentencepiece flask-cors protobuf
+# RUN pip install flask transformers torch sentencepiece flask-cors protobuf
+
+COPY requirements.txt /app
+
+RUN pip install --no-cache-dir -r requirements.txt
+
 
 COPY . /app.py
 
