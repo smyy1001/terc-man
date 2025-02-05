@@ -28,6 +28,8 @@ bash download_models.sh
 ```
 Bu script, gerekli modelleri indirerek **models/** klasörüne yerleştirecektir.
 
+> ⚠️ Dikkat! Sıradaki adıma geçmeden önce .env dosyasındaki backend ve frontend urllerini güncellemeyi unutmayınız! (Modellerin adresleri değiştirlmemelidir)
+
 ### 4️⃣ Docker Image'i Oluşturun ve Çalıştırın
 
 Docker ile servisi ayağa kaldırmak için aşağıdaki komutu çalıştırabilirsiniz:
