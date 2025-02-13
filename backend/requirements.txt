@@ -4,3 +4,4 @@ torch
 sentencepiece
 flask-cors
 protobuf
+boto3

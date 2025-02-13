@@ -8,64 +8,104 @@ from transformers import (
     AutoTokenizer,
 )
 import os
+import boto3
+import torch
+from io import BytesIO
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
 
-# # Load the mBART50 model and tokenizer
-# MBART50_DIR = os.getenv("MBART50_DIR", "/app/models/mbart50")
-# mbart_model = MBartForConditionalGeneration.from_pretrained(MBART50_DIR)
-# mbart_tokenizer = MBart50Tokenizer.from_pretrained(MBART50_DIR)
+# MinIO Configuration
+S3_ENDPOINT = os.getenv("S3_ENDPOINT", "http://minio:9000")
+ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID", "admin")
+SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "admin123")
 
-# # Load the M2M100 model and tokenizer
-# M2M100_DIR = os.getenv("M2M100_DIR", "/app/models/m2m100")
-# m2m_model = M2M100ForConditionalGeneration.from_pretrained(M2M100_DIR)
-# m2m_tokenizer = M2M100Tokenizer.from_pretrained(M2M100_DIR)
-
-# # Load the NLLB model and tokenizer
-# NLLB_DIR = os.getenv("NLLB_DIR", "/app/models/nllb")
-# nllb_model = AutoModelForSeq2SeqLM.from_pretrained(NLLB_DIR)
-# nllb_tokenizer = AutoTokenizer.from_pretrained(NLLB_DIR)
-
-# # Load the Helsinki-NLP Opus-MT model and tokenizer
-# HELSINKI_NLP_DIR = os.getenv("HELSINKI_NLP_DIR", "models/helsinki_nlp")
-# opus_tokenizer = AutoTokenizer.from_pretrained(HELSINKI_NLP_DIR)
-# opus_model = AutoModelForSeq2SeqLM.from_pretrained(HELSINKI_NLP_DIR)
+# Create MinIO client
+s3_client = boto3.client(
+    "s3",
+    endpoint_url=S3_ENDPOINT,
+    aws_access_key_id=ACCESS_KEY,
+    aws_secret_access_key=SECRET_KEY,
+)
 
 
-MBART50_DIR = os.getenv("MBART50_DIR", "/app/models/mbart50")
-M2M100_DIR = os.getenv("M2M100_DIR", "/app/models/m2m100")
-NLLB_DIR = os.getenv("NLLB_DIR", "/app/models/nllb")
-HELSINKI_NLP_DIR = os.getenv("HELSINKI_NLP_DIR", "/app/models/helsinki_nlp")
+def load_model_from_s3(bucket_name):
+    """Download a model from MinIO to a temporary local folder."""
+    print(f"📡 Downloading {bucket_name} model from MinIO...")
 
+    temp_dir = f"/tmp/models/{bucket_name}"
+    os.makedirs(temp_dir, exist_ok=True)  # Ensure the directory exists
+
+    # List all objects in the bucket
+    response = s3_client.list_objects_v2(Bucket=bucket_name)
+
+    if "Contents" not in response:
+        raise Exception(f"⚠️ No files found in {bucket_name} bucket")
+
+    # Download each file and save it locally
+    for obj in response["Contents"]:
+        file_key = obj["Key"]
+        local_path = os.path.join(temp_dir, file_key)
+
+        print(f"⬇️ Downloading {file_key} to {local_path}...")
+        with open(local_path, "wb") as f:
+            s3_client.download_fileobj(bucket_name, file_key, f)
+
+    print(f"✅ {bucket_name} model saved at {temp_dir}.")
+    return temp_dir  # Return the local folder path
+
+
+# Load MBART50 model from "mbart50" bucket
 try:
-    mbart_model = MBartForConditionalGeneration.from_pretrained(MBART50_DIR)
-    mbart_tokenizer = MBart50Tokenizer.from_pretrained(MBART50_DIR)
+    mbart_dir = load_model_from_s3("mbart50")
+    mbart_model = MBartForConditionalGeneration.from_pretrained(mbart_dir)
+    mbart_tokenizer = MBart50Tokenizer.from_pretrained(mbart_dir)
     mbart_status = "UP"
 except Exception as e:
     mbart_status = f"DOWN - {str(e)}"
 
+# Load M2M100 model from "m2m100" bucket
 try:
-    m2m_model = M2M100ForConditionalGeneration.from_pretrained(M2M100_DIR)
-    m2m_tokenizer = M2M100Tokenizer.from_pretrained(M2M100_DIR)
+    m2m_dir = load_model_from_s3("m2m100")
+    m2m_model = M2M100ForConditionalGeneration.from_pretrained(m2m_dir)
+    m2m_tokenizer = M2M100Tokenizer.from_pretrained(m2m_dir)
     m2m_status = "UP"
 except Exception as e:
     m2m_status = f"DOWN - {str(e)}"
 
+# Load NLLB model from "nllb" bucket
 try:
-    nllb_model = AutoModelForSeq2SeqLM.from_pretrained(NLLB_DIR)
-    nllb_tokenizer = AutoTokenizer.from_pretrained(NLLB_DIR)
+    nllb_dir = load_model_from_s3("nllb")
+    nllb_model = AutoModelForSeq2SeqLM.from_pretrained(nllb_dir)
+    nllb_tokenizer = AutoTokenizer.from_pretrained(nllb_dir)
     nllb_status = "UP"
 except Exception as e:
     nllb_status = f"DOWN - {str(e)}"
 
+# Load Helsinki-NLP model from "helsinkinlp" bucket
 try:
-    opus_tokenizer = AutoTokenizer.from_pretrained(HELSINKI_NLP_DIR)
-    opus_model = AutoModelForSeq2SeqLM.from_pretrained(HELSINKI_NLP_DIR)
+    opus_dir = load_model_from_s3("helsinkinlp")
+    opus_model = AutoModelForSeq2SeqLM.from_pretrained(opus_dir)
+    opus_tokenizer = AutoTokenizer.from_pretrained(opus_dir)
     opus_status = "UP"
 except Exception as e:
     opus_status = f"DOWN - {str(e)}"
+
+
+@app.route("/health", methods=["GET"])
+def health_check():
+    health_status = {
+        "mbart50": mbart_status,
+        "m2m100": m2m_status,
+        "nllb": nllb_status,
+        "opus_mt": opus_status,
+    }
+
+    if all(status == "UP" for status in health_status.values()):
+        return jsonify({"status": "healthy", "models": health_status}), 200
+    else:
+        return jsonify({"status": "unhealthy", "models": health_status}), 500
 
 
 # Endpoint for mBART50
@@ -165,7 +205,6 @@ def translate_nllb():
     return jsonify({"translation": translation})
 
 
-
 # Endpoint for Helsinki-NLP Opus-MT
 @app.route("/translate/opus_mt", methods=["POST"])
 def translate_opus_mt():
@@ -199,22 +238,6 @@ def translate_opus_mt():
 @app.route("/translate", methods=["POST"])
 def translate_simple():
     return jsonify({"Warning": "Lütfen geçerli bir model seçiniz"})
-
-
-@app.route("/health", methods=["GET"])
-def health_check():
-    health_status = {
-        "mbart50": mbart_status,
-        "m2m100": m2m_status,
-        "nllb": nllb_status,
-        "opus_mt": opus_status,
-    }
-
-    # Check if all models are up
-    if all(status == "UP" for status in health_status.values()):
-        return jsonify({"status": "healthy", "models": health_status}), 200
-    else:
-        return jsonify({"status": "unhealthy", "models": health_status}), 500
 
 
 if __name__ == "__main__":
