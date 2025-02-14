@@ -1,7 +1,7 @@
 version: '3.8'
 services:
 
-  minio:
+  tercuman-minio:
     image: quay.io/minio/minio
     container_name: minio
     command: server /data --console-address ":9001"
@@ -12,12 +12,12 @@ services:
       - "9000:9000"  # API
       - "9001:9001"  # Web UI
     volumes:
-      - minio_data:/data
+      - tercuman_minio_data:/data
 
 volumes:
-  minio_data:
+  tercuman_minio_data:
 
 networks:
   default:
     external:
-      name: terc-man_default
+      name: tercuman-network

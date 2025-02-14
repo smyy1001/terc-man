@@ -34,4 +34,4 @@ services:
 networks:
   default:
     external:
-      name: terc-man_default
+      name: tercuman-network
