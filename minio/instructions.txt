@@ -1,3 +1,0 @@
-docker volume create minio_data
-docker run --rm -v minio_data:/data -v $(pwd):/backup busybox tar -xzvf /backup/minio_data_backup.tar.gz -C /data
-docker-compose up --build -d
