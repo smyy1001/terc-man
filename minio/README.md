@@ -12,7 +12,7 @@ Bu klasörün içerisinde aşağıdaki komutu çalıştırın:
 
 Minio'nun ayağı kalktığına emin olduktan sonra (tarayıcıdan kontrol edebilirsiniz: http://localhost:9001 ) aşağıdaki komutu çalıştırınız:
 
-> DİKKAT! upload_models.sh dosyasını çalıştırmadan önce içerisindeki <PATH_TO_...> ile belirtilen noktaları modellerin bilgisayarınızdaki gerçek konumları ile değiştirmeyi unutmayınız!
+> DİKKAT! upload_models.sh dosyasını çalıştırmadan önce aynı klasördeki .env dosyasından <PATH_TO_...> ile belirtilen noktaları modellerin bilgisayarınızdaki gerçek konumları ile değiştirmeyi unutmayınız!
 
 ```bash
  chmod +x upload_models.sh

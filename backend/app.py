@@ -17,7 +17,7 @@ app = Flask(__name__)
 CORS(app)
 
 
-S3_BUCKET = "models-bucket"  
+S3_BUCKET = os.getenv("BUCKET_NAME", "models_bucket")
 S3_ENDPOINT = os.getenv("S3_ENDPOINT", "http://minio:9000")
 ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID", "admin")
 SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "admin123")
@@ -56,7 +56,6 @@ def load_model_from_s3(model_name):
 
     print(f"✅ {model_name} model saved at {temp_dir}.")
     return temp_dir  
-
 
 
 models = {
