@@ -84,7 +84,7 @@ const Translate = () => {
     const { lan1 = "", lan2 = "" } = useParams();
     const navigate = useNavigate();
 
-    // Ensure default languages are set
+    
     const [selectedLan1, setSelectedLan1] = useState(lan1);
     const [selectedLan2, setSelectedLan2] = useState(lan2);
     const [selectedModel, setSelectedModel] = useState('nllb');
@@ -156,7 +156,7 @@ const Translate = () => {
             try {
                 const result = await translateText(inputText, selectedLan1, selectedLan2);
                 setTranslation(result);
-                // toast.success(result);
+                
             } catch (error) {
                 toast.error("An error occurred while translating. Check the console for details.");
             }
@@ -176,8 +176,8 @@ const Translate = () => {
                 return sortAlphabetically(countries_m2m100);
             case 'nllb':
                 return sortAlphabetically(countries_nllb);
-            case 'opus_mt':
-                return sortAlphabetically(countries_opus_mt);
+            case 'helsinkinlp':
+                return sortAlphabetically(countries_helsinkinlp);
             default:
                 return [];
         }
@@ -185,7 +185,7 @@ const Translate = () => {
 
 
     const getCountriesSource = () => {
-        if (selectedModel === 'opus_mt') {
+        if (selectedModel === 'helsinkinlp') {
             return [{ code: 'en', label: 'İngilizce' },];
         }
         else { return getCountries(); }
@@ -462,7 +462,7 @@ const models = [
     { code: 'nllb', label: 'NLLB (Mul-Mul) / 202 Dil' },
     { code: 'm2m100', label: 'M2M100 (Mul-Mul) / 100 Dil' },
     { code: 'mbart50', label: 'mBART50 (Mul-Mul) / 52 Dil' },
-    { code: 'opus_mt', label: 'Opus MT (Mul-İng) 103 Dil' }
+    { code: 'helsinkinlp', label: 'Opus MT (Mul-İng) 103 Dil' }
 ]
 
 const countries_mbart50 = [
@@ -828,7 +828,7 @@ const countries_nllb = [
     { code: 'zul_Latn', label: 'Zuluca' }
 ];
 
-const countries_opus_mt = [
+const countries_helsinkinlp = [
     { code: "af", label: "Afrikaanca" },
     { code: "am", label: "Amharca" },
     { code: "ar", label: "Arapça" },
@@ -847,7 +847,7 @@ const countries_opus_mt = [
     { code: "da", label: "Danca" },
     { code: "de", label: "Almanca" },
     { code: "el", label: "Yunanca" },
-    // { code: "en", label: "İngilizce" }, // Uncomment if needed
+    
     { code: "eo", label: "Esperanto" },
     { code: "es", label: "İspanyolca" },
     { code: "et", label: "Estonca" },
