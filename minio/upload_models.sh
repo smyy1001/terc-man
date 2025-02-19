@@ -11,10 +11,10 @@ BUCKET_NAME="models-bucket"
 
 declare -A MODELS
 MODELS=(
-    [helsinkinlp]="/home/sumeyye/Desktop/models/helsinkinlp"
-    [m2m100]="/home/sumeyye/Desktop/models/m2m100"
-    [mbart50]="/home/sumeyye/Desktop/models/mbart50"
-    [nllb]="/home/sumeyye/Desktop/models/nllb"
+    [helsinkinlp]="./<PATH_TO_helsinki>"
+    [m2m100]="./<PATH_TO_m2m100>"
+    [mbart50]="./<PATH_TO_mbart50>"
+    [nllb]="./<PATH_TO_nllb>"
 )
 
 
