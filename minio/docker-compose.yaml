@@ -11,11 +11,7 @@ services:
     ports:
       - "9000:9000"  # API
       - "9001:9001"  # Web UI
-    volumes:
-      - tercuman_minio_data:/data
 
-volumes:
-  tercuman_minio_data:
 
 networks:
   default:
