@@ -12,16 +12,24 @@ import boto3
 import torch
 from io import BytesIO
 from flask_cors import CORS
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
-
 
 S3_BUCKET = os.getenv("BUCKET_NAME", "models-bucket")
 S3_ENDPOINT = os.getenv("S3_ENDPOINT", "http://minio:9000")
 ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID", "admin")
 SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "admin123")
 
+MODEL_PATHS = {
+    "mbart50": os.getenv("MINIO_MBART50_PATH", "models/mbart50/"),
+    "m2m100": os.getenv("MINIO_M2M100_PATH", "models/m2m100/"),
+    "nllb": os.getenv("MINIO_NLLB_PATH", "models/nllb/"),
+    "helsinkinlp": os.getenv("MINIO_HELSINKINLP_PATH", "models/helsinkinlp/"),
+}
 
 s3_client = boto3.client(
     "s3",
@@ -32,30 +40,31 @@ s3_client = boto3.client(
 
 
 def load_model_from_s3(model_name):
+    """Downloads a model from S3 to /tmp/models/{model_name}/"""
     print(f"📡 Downloading {model_name} model from MinIO...")
 
     temp_dir = f"/tmp/models/{model_name}"
     os.makedirs(temp_dir, exist_ok=True)
 
-    
-    response = s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix=f"{model_name}/")
+    model_s3_path = MODEL_PATHS.get(model_name)
+    if not model_s3_path:
+        raise Exception(f"⚠️ Model path not found for {model_name}")
+
+    response = s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix=model_s3_path)
 
     if "Contents" not in response:
         raise Exception(f"⚠️ No files found for {model_name} in {S3_BUCKET}")
 
-    
     for obj in response["Contents"]:
         file_key = obj["Key"]
-        local_path = os.path.join(
-            temp_dir, file_key.replace(f"{model_name}/", "")
-        )  
+        local_path = os.path.join(temp_dir, file_key.replace(model_s3_path, ""))
 
         print(f"⬇️ Downloading {file_key} to {local_path}...")
         with open(local_path, "wb") as f:
             s3_client.download_fileobj(S3_BUCKET, file_key, f)
 
     print(f"✅ {model_name} model saved at {temp_dir}.")
-    return temp_dir  
+    return temp_dir
 
 
 models = {
@@ -104,7 +113,6 @@ def translate(model_name):
 
     model_obj = loaded_models[model_name]
     model, tokenizer = model_obj["model"], model_obj["tokenizer"]
-    print("model_name",model_name)
 
     if model_name == "mbart50":
         tokenizer.src_lang = src_lang
