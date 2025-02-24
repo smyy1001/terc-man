@@ -38,10 +38,8 @@ s3_client = boto3.client(
     aws_secret_access_key=SECRET_KEY,
 )
 
-# Initialize Redis
 redis_client = redis.StrictRedis(host="redis", port=6379, db=0)
 
-# Model configurations
 models = {
     "mbart50": {"class": MBartForConditionalGeneration, "tokenizer": MBart50Tokenizer},
     "m2m100": {"class": M2M100ForConditionalGeneration, "tokenizer": M2M100Tokenizer},
@@ -49,7 +47,6 @@ models = {
     "helsinkinlp": {"class": AutoModelForSeq2SeqLM, "tokenizer": AutoTokenizer},
 }
 
-# Dictionary to store loaded models
 loaded_models = {}
 
 
