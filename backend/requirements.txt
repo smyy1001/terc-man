@@ -6,3 +6,5 @@ flask-cors
 protobuf
 boto3
 python-dotenv
+redis
+waitress

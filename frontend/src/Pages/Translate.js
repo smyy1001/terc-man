@@ -16,6 +16,7 @@ import KeyboardComponent from "react-simple-keyboard";
 import "react-simple-keyboard/build/css/index.css";
 import Axios from '../Axios';
 import toast, { Toaster } from 'react-hot-toast';
+import { useCallback } from "react";
 
 
 const CustomTextField = styled(TextField)({
@@ -151,17 +152,24 @@ const Translate = () => {
     }
 
 
-    const handleTranslate = async () => {
+    const debounce = (func, delay) => {
+        let timer;
+        return (...args) => {
+            clearTimeout(timer);
+            timer = setTimeout(() => func(...args), delay);
+        };
+    };
+
+    const handleTranslate = useCallback(debounce(async () => {
         if (checkLan1() && checkLan2() && checkInput()) {
             try {
                 const result = await translateText(inputText, selectedLan1, selectedLan2);
                 setTranslation(result);
-                
             } catch (error) {
-                toast.error("An error occurred while translating. Check the console for details.");
+                toast.error("An error occurred while translating.");
             }
         }
-    };
+    }, 500), [inputText, selectedLan1, selectedLan2]);
 
 
     const getCountries = () => {

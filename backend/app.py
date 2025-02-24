@@ -10,7 +10,7 @@ from transformers import (
 import os
 import boto3
 import torch
-from io import BytesIO
+import redis
 from flask_cors import CORS
 from dotenv import load_dotenv
 
@@ -38,9 +38,22 @@ s3_client = boto3.client(
     aws_secret_access_key=SECRET_KEY,
 )
 
+# Initialize Redis
+redis_client = redis.StrictRedis(host="redis", port=6379, db=0)
+
+# Model configurations
+models = {
+    "mbart50": {"class": MBartForConditionalGeneration, "tokenizer": MBart50Tokenizer},
+    "m2m100": {"class": M2M100ForConditionalGeneration, "tokenizer": M2M100Tokenizer},
+    "nllb": {"class": AutoModelForSeq2SeqLM, "tokenizer": AutoTokenizer},
+    "helsinkinlp": {"class": AutoModelForSeq2SeqLM, "tokenizer": AutoTokenizer},
+}
+
+# Dictionary to store loaded models
+loaded_models = {}
+
 
 def load_model_from_s3(model_name):
-    """Downloads a model from S3 to /tmp/models/{model_name}/"""
     print(f"📡 Downloading {model_name} model from MinIO...")
 
     temp_dir = f"/tmp/models/{model_name}"
@@ -84,9 +97,12 @@ for model_name, config in models.items():
         tokenizer = config["tokenizer"].from_pretrained(model_dir)
 
         loaded_models[model_name] = {"model": model, "tokenizer": tokenizer}
-        loaded_status[model_name] = "UP"
+        print(f"✅ {model_name} model is ready.")
+
     except Exception as e:
-        loaded_status[model_name] = f"DOWN - {str(e)}"
+        print(f"⚠️ Error loading {model_name}: {e}")
+
+print("✅ All models loaded successfully.")
 
 
 @app.route("/health", methods=["GET"])
@@ -100,7 +116,7 @@ def health_check():
 @app.route("/translate/<model_name>", methods=["POST"])
 def translate(model_name):
     data = request.json
-    text = data.get("text", "")
+    text = data.get("text", "").strip()
     src_lang = data.get("src_lang")
     tgt_lang = data.get("tgt_lang")
 
@@ -111,16 +127,15 @@ def translate(model_name):
     if model_name not in loaded_models:
         return jsonify({"error": f"Model '{model_name}' not found"}), 400
 
+    cache_key = f"{model_name}:{src_lang}:{tgt_lang}:{text}"
+    cached_translation = redis_client.get(cache_key)
+    if cached_translation:
+        return jsonify({"translation": cached_translation.decode("utf-8")})
+
     model_obj = loaded_models[model_name]
     model, tokenizer = model_obj["model"], model_obj["tokenizer"]
 
-    if model_name == "mbart50":
-        tokenizer.src_lang = src_lang
-        encoded_text = tokenizer(text, return_tensors="pt", truncation=True)
-        generated_tokens = model.generate(
-            **encoded_text, forced_bos_token_id=tokenizer.lang_code_to_id[tgt_lang]
-        )
-    elif model_name == "m2m100":
+    if model_name in ["mbart50", "m2m100"]:
         tokenizer.src_lang = src_lang
         encoded_text = tokenizer(text, return_tensors="pt", truncation=True)
         generated_tokens = model.generate(
@@ -150,8 +165,16 @@ def translate(model_name):
         return jsonify({"error": "Invalid model name"}), 400
 
     translation = tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)[0]
+
+    redis_client.set(cache_key, translation, ex=3600)  # 1 saat cache'de tut
     return jsonify({"translation": translation})
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    from waitress import serve
+
+    print("🚀 Downloading and loading models before starting the server...")
+    # load_all_models()
+
+    print("🚀 Starting Flask app with Waitress server...")
+    serve(app, host="0.0.0.0", port=8080)
